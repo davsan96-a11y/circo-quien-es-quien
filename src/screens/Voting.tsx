@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import { HostBar, Stripes, useUi } from '../components/ui';
+import { ExitLink, HostBar, Stripes, useUi } from '../components/ui';
 import type { PhaseProps } from './Game';
 
 export function Voting({ state, session, run, setState }: PhaseProps) {
@@ -81,6 +81,8 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
           {state.my_vote ? 'Puedes cambiar tu voto hasta que se revele.' : 'Toca a quien creas que la escribió.'}
         </p>
       )}
+
+      <ExitLink />
 
       {state.is_host && (
         <HostBar label={left > 0 ? `FALTAN ${left}` : 'TODOS HAN VOTADO'}>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { api } from '../lib/api';
 import { roomUrl } from '../lib/router';
-import { HostBar, Stripes, useUi } from '../components/ui';
+import { ExitLink, HostBar, Stripes, useUi } from '../components/ui';
 import type { PhaseProps } from './Game';
 
 export function QrCode({ code, className }: { code: string; className?: string }) {
@@ -107,6 +107,8 @@ export function Lobby({ state, session, run }: PhaseProps) {
           {state.liar_bonus && <p className="muted small">Bonus engañador activado: el autor gana +1 por cada uno que falle (máx. 3).</p>}
         </div>
       )}
+
+      <ExitLink />
 
       {host && (
         <HostBar label={n < 3 ? 'MÍNIMO 3' : undefined}>

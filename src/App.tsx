@@ -45,6 +45,14 @@ export function App() {
         return <Game key={`${session.roomCode}-${session.playerId}`} session={session} onSessionLost={onSessionLost} />;
       return <JoinForm key={`join-${route.code}`} mode="join" initialCode={route.code} onSession={onSession} />;
     default:
-      return <Home session={session} />;
+      return (
+        <Home
+          session={session}
+          onForget={() => {
+            clearSession();
+            setSession(null);
+          }}
+        />
+      );
   }
 }

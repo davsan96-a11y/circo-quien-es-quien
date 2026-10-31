@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { loadDraft, saveDraft } from '../lib/session';
-import { HostBar, Stripes, joinNames, useUi } from '../components/ui';
+import { ExitLink, HostBar, Stripes, joinNames, useUi } from '../components/ui';
 import type { PhaseProps } from './Game';
 
 const EXAMPLES = [
@@ -152,6 +152,8 @@ export function Writing({ state, session, run }: PhaseProps) {
           <p className="green small">¡Ya están todas! 🎉</p>
         )}
       </div>
+
+      <ExitLink />
 
       {state.is_host && (
         <HostBar label={missing.length ? `FALTAN ${missing.length}` : 'TODAS LISTAS'}>

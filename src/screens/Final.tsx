@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import { HostBar, Stripes, useUi } from '../components/ui';
+import { ExitLink, HostBar, Stripes, useUi } from '../components/ui';
 import type { PhaseProps } from './Game';
 import { RankRow } from './Reveal';
 
@@ -73,6 +73,8 @@ export function Final({ state, session, run }: PhaseProps) {
           ))}
         </ol>
       </details>
+
+      <ExitLink />
 
       {state.is_host && (
         <HostBar>

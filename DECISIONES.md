@@ -40,8 +40,10 @@ Decisiones que la spec dejaba abiertas o que hubo que ajustar. Siempre la opció
 - Rutas: `#/` portada, `#/crear`, `#/unirse`, `#/sala/ABCD` (juego si tienes sesión en esa sala; si no,
   formulario de unirse con el código relleno), `#/anfitrion/ABCD` (recuperar). `?sala=ABCD` se convierte en
   `#/sala/ABCD`. El QR apunta a `…/#/sala/ABCD`.
-- Al abrir la web con una sesión guardada se entra directamente en la partida (botón "Volver a mi partida"
-  si vuelves a la portada a mano).
+- Al abrir la web con una sesión guardada se entra directamente en la partida. Dentro de la partida hay un
+  enlace "‹ Salir al menú" (no abandona la partida: en la portada aparece "Volver a mi partida") y en la
+  portada "Olvidar esta partida" borra la sesión de ese móvil para que deje de entrar sola.
+- Cada pantalla, fase o anécdota nueva empieza arriba del todo (scroll a 0).
 - El borrador de la anécdota se guarda en `localStorage` mientras escribes, por si se recarga antes de
   guardar.
 - El emoji se preselecciona al azar (se puede cambiar); los emojis pueden repetirse entre jugadores.

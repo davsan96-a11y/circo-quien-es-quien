@@ -261,6 +261,16 @@ test('partida completa 1 anfitrión + 5 jugadores', async ({ browser }) => {
   console.log('Lectura directa de tablas:', direct);
   for (const v of Object.values(direct)) expect(v === '[]' || (typeof v === 'number' && v >= 400)).toBeTruthy();
 
+  // ───── Salir al menú y volver; al reabrir la web vuelve sola a la partida
+  const lucia = players[0].page;
+  await lucia.getByRole('button', { name: '‹ Salir al menú' }).click();
+  await expect(lucia.getByRole('button', { name: 'Crear sala' })).toBeVisible();
+  await shot(players[0], '10-portada-con-partida');
+  await lucia.getByRole('button', { name: `Volver a mi partida · sala ${code}` }).click();
+  await expect(lucia.getByRole('heading', { name: '¡Fin del espectáculo!' })).toBeVisible();
+  await lucia.goto('./');
+  await expect(lucia.getByRole('heading', { name: '¡Fin del espectáculo!' })).toBeVisible();
+
   // ───── Recuperar anfitrión desde un móvil nuevo con el PIN
   const rescue = await newPlayer(browser, 'rescate', '🎩', { width: 375, height: 667 });
   await rescue.page.goto(`./#/sala/${code}`);
@@ -283,6 +293,14 @@ test('partida completa 1 anfitrión + 5 jugadores', async ({ browser }) => {
   await players[3].page.getByRole('button', { name: 'Jugar otra vez' }).click();
   await players[3].page.getByRole('dialog').getByRole('button', { name: 'Jugar otra vez' }).click();
   for (const p of all) await expect(p.page.getByTestId('lobby-player')).toHaveCount(6);
+
+  // Olvidar la partida: ya no vuelve sola al reabrir
+  await lucia.getByRole('button', { name: '‹ Salir al menú' }).click();
+  await lucia.getByRole('button', { name: 'Olvidar esta partida' }).click();
+  await lucia.getByRole('dialog').getByRole('button', { name: 'Olvidar' }).click();
+  await expect(lucia.getByRole('button', { name: /Volver a mi partida/ })).toHaveCount(0);
+  await lucia.reload();
+  await expect(lucia.getByRole('button', { name: 'Unirme a una sala' })).toBeVisible();
   void byId;
   void revealIndexStart;
 });

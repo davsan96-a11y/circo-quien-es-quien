@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ApiError } from '../lib/api';
 import { useGameState } from '../lib/useGameState';
 import { useWakeLock } from '../lib/wakeLock';
@@ -22,6 +22,12 @@ export function Game({ session, onSessionLost }: { session: Session; onSessionLo
   const { toast } = useUi();
   const { state, offline, act, setState } = useGameState(session, onSessionLost);
   useWakeLock(true);
+
+  // Cada fase o anécdota nueva empieza arriba del todo
+  const screenKey = `${state?.phase}-${state?.anecdote?.id ?? ''}`;
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [screenKey]);
 
   const run = useCallback(
     async (fn: () => Promise<unknown>) => {

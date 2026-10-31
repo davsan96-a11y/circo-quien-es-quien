@@ -220,6 +220,19 @@ p {
   min-height: 48px;
 }
 
+.forget-link {
+  color: var(--muted);
+  font-size: 16px;
+  padding: 4px;
+  min-height: 40px;
+}
+.exit-link {
+  margin-top: auto;
+  align-self: center;
+  color: var(--muted);
+  font-size: 16px;
+}
+
 .back {
   width: 52px;
   height: 52px;

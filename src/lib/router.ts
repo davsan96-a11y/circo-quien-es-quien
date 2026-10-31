@@ -51,7 +51,10 @@ export function normalizeInitialUrl() {
 export function useRoute(): Route {
   const [route, setRoute] = useState<Route>(parseRoute);
   useEffect(() => {
-    const on = () => setRoute(parseRoute());
+    const on = () => {
+      setRoute(parseRoute());
+      window.scrollTo(0, 0);
+    };
     window.addEventListener('hashchange', on);
     return () => window.removeEventListener('hashchange', on);
   }, []);

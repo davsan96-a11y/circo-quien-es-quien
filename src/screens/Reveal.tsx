@@ -1,5 +1,5 @@
 import { api } from '../lib/api';
-import { HostBar, Stripes } from '../components/ui';
+import { ExitLink, HostBar, Stripes } from '../components/ui';
 import type { Score } from '../lib/types';
 import type { PhaseProps } from './Game';
 
@@ -106,6 +106,8 @@ export function Reveal({ state, session, run }: PhaseProps) {
         ))}
         {top3.length === 0 && <span className="text">Aún no ha puntuado nadie 👀</span>}
       </div>
+
+      <ExitLink />
 
       {state.is_host && (
         <HostBar>

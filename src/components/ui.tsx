@@ -1,5 +1,6 @@
 import { Component, createContext, useCallback, useContext, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { navigate } from '../lib/router';
 
 // ───────── Toasts + confirmaciones ─────────
 
@@ -124,6 +125,15 @@ export function HostBar({ children, label }: { children: ReactNode; label?: Reac
       </div>
       {children}
     </div>
+  );
+}
+
+/** Vuelve a la portada sin abandonar la partida (se puede volver con "Volver a mi partida") */
+export function ExitLink() {
+  return (
+    <button className="link exit-link" onClick={() => navigate('')}>
+      ‹ Salir al menú
+    </button>
   );
 }
 
