@@ -1,4 +1,17 @@
 import { test, expect, type Browser, type Page } from '@playwright/test';
+import type { BrowserContext } from '@playwright/test';
+
+// Cada prueba cierra sus navegadores al acabar: el navegador se comparte entre pruebas y las páginas
+// abiertas de pruebas anteriores (p. ej. las 22 de la multitud) le robarían CPU a las siguientes.
+const openContexts: BrowserContext[] = [];
+async function track(c: Promise<BrowserContext>) {
+  const ctx = await c;
+  openContexts.push(ctx);
+  return ctx;
+}
+test.afterEach(async () => {
+  await Promise.all(openContexts.splice(0).map((c) => c.close().catch(() => {})));
+});
 
 /**
  * Situaciones de la vida real: sin red, WebSocket bloqueado (solo sondeo), expulsión, volver a la
@@ -6,7 +19,7 @@ import { test, expect, type Browser, type Page } from '@playwright/test';
  */
 
 async function ctx(browser: Browser, viewport = { width: 390, height: 844 }) {
-  const c = await browser.newContext({ viewport, isMobile: true, hasTouch: true, locale: 'es-ES' });
+  const c = await track(browser.newContext({ viewport, isMobile: true, hasTouch: true, locale: 'es-ES' }));
   const page = await c.newPage();
   page.on('pageerror', (e) => console.log('pageerror', e.message));
   return page;

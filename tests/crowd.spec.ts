@@ -1,4 +1,17 @@
 import { test, expect, type Page } from '@playwright/test';
+import type { BrowserContext } from '@playwright/test';
+
+// Cada prueba cierra sus navegadores al acabar: el navegador se comparte entre pruebas y las páginas
+// abiertas de pruebas anteriores (p. ej. las 22 de la multitud) le robarían CPU a las siguientes.
+const openContexts: BrowserContext[] = [];
+async function track(c: Promise<BrowserContext>) {
+  const ctx = await c;
+  openContexts.push(ctx);
+  return ctx;
+}
+test.afterEach(async () => {
+  await Promise.all(openContexts.splice(0).map((c) => c.close().catch(() => {})));
+});
 
 /**
  * Multitud: 1 anfitrión + 21 jugadores en navegadores reales (22 contextos) jugando a la vez.
@@ -9,7 +22,7 @@ const N = Number(process.env.CROWD || 21);
 test('22 navegadores en la misma partida', async ({ browser }) => {
   test.setTimeout(600_000);
   const mk = async () => {
-    const c = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+    const c = await track(browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }));
     const p = await c.newPage();
     p.on('pageerror', (e) => console.log('pageerror', e.message));
     return p;
