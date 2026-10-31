@@ -27,7 +27,8 @@ export function UiProvider({ children }: { children: ReactNode }) {
   const toast = useCallback((msg: string, kind: 'error' | 'info' = 'error') => {
     const id = ++idRef.current;
     setToasts((t) => [...t.filter((x) => x.msg !== msg), { id, msg, kind }].slice(-3));
-    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3800);
+    // Los avisos de éxito duran poco para no tapar la pantalla siguiente
+    window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), kind === 'info' ? 1600 : 3800);
   }, []);
 
   const confirm = useCallback(

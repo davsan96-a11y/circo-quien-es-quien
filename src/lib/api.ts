@@ -21,12 +21,36 @@ export class ApiError extends Error {
   }
 }
 
-async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+/** Señal que aborta la petición pasado un tiempo: en móvil una petición colgada bloquearía la sincronización */
+function timeout(ms: number): AbortSignal {
+  const c = new AbortController();
+  setTimeout(() => c.abort(), ms);
+  return c.signal;
+}
+
+const NET_MSG = 'Sin conexión. Vuelve a intentarlo en un momento.';
+
+// Acciones que NO se reintentan solas: repetirlas tras un fallo de red podría duplicar la sala o
+// dejar el nombre "cogido" por el primer intento. Todas las demás son idempotentes en el servidor.
+const NO_RETRY = new Set(['qeq_create_room', 'qeq_join_room']);
+
+async function rpc<T>(fn: string, args: Record<string, unknown>, ms = 12000): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await rpcOnce<T>(fn, args, ms);
+    } catch (e) {
+      if (!(e instanceof ApiError) || e.kind !== 'network' || attempt >= 1 || NO_RETRY.has(fn)) throw e;
+      await new Promise((r) => setTimeout(r, 800));
+    }
+  }
+}
+
+async function rpcOnce<T>(fn: string, args: Record<string, unknown>, ms: number): Promise<T> {
   let res;
   try {
-    res = await supabase.rpc(fn, args);
+    res = await supabase.rpc(fn, args).abortSignal(timeout(ms));
   } catch {
-    throw new ApiError('Sin conexión, reintentando…', 'network');
+    throw new ApiError(NET_MSG, 'network');
   }
   const { data, error } = res;
   if (error) {
@@ -34,8 +58,8 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
     if (hint === 'qeq_auth') throw new ApiError(error.message, 'auth');
     if (hint === 'qeq_no_room') throw new ApiError(error.message, 'no_room');
     // PostgREST devuelve errores sin `code` SQL cuando el fetch falla
-    if (!error.code || /fetch|network|Failed/i.test(error.message)) {
-      throw new ApiError('Sin conexión, reintentando…', 'network');
+    if (!error.code || /fetch|network|Failed|abort/i.test(error.message)) {
+      throw new ApiError(NET_MSG, 'network');
     }
     throw new ApiError(error.message, 'game');
   }
@@ -73,7 +97,7 @@ export const api = {
     }),
   reclaimHost: (s: Session, pin: string) =>
     pinRpc('qeq_reclaim_host', { p_code: s.roomCode, p_pin: pin, p_player_id: s.playerId, p_secret: s.secret }),
-  getState: (s: Session) => rpc<GameState>('qeq_get_state', who(s)),
+  getState: (s: Session) => rpc<GameState>('qeq_get_state', who(s), 8000),
   setLiarBonus: (s: Session, on: boolean) => rpc('qeq_set_liar_bonus', { ...who(s), p_on: on }),
   setMode: (s: Session, mode: string, count: number) => rpc('qeq_set_mode', { ...who(s), p_mode: mode, p_count: count }),
   startWriting: (s: Session) => rpc('qeq_start_writing', who(s)),
@@ -91,7 +115,14 @@ export const api = {
 };
 
 export async function fetchSignalVersion(code: string): Promise<number | null> {
-  const { data, error } = await supabase.from('qeq_room_signal').select('version').eq('code', code).maybeSingle();
-  if (error) throw new ApiError('Sin conexión, reintentando…', 'network');
+  // Sin reintentos (el propio sondeo ya reintenta cada 3 s) y con tiempo máximo
+  const { data, error } = await supabase
+    .from('qeq_room_signal')
+    .select('version')
+    .eq('code', code)
+    .retry(false)
+    .abortSignal(timeout(4000))
+    .maybeSingle();
+  if (error) throw new ApiError(NET_MSG, 'network');
   return data ? Number(data.version) : null;
 }

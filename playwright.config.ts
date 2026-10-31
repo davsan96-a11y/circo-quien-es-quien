@@ -10,10 +10,14 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL,
-    browserName: 'chromium',
     locale: 'es-ES',
     trace: 'retain-on-failure',
   },
+  projects: [
+    { name: 'chromium', use: { browserName: 'chromium' } },
+    // Motor de Safari (iPhone): las partidas completas también se prueban aquí
+    { name: 'webkit', use: { browserName: 'webkit' }, testMatch: /(game|questions|resilience)\.spec\.ts/ },
+  ],
   webServer: process.env.BASE_URL
     ? undefined
     : { command: 'npx vite --port 5173 --strictPort', url: 'http://localhost:5173/', reuseExistingServer: true },

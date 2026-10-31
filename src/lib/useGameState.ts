@@ -91,17 +91,21 @@ export function useGameState(session: Session, onSessionLost: (msg: string) => v
   // Sondeo de respaldo
   useEffect(() => {
     refresh();
+    let polling = false;
     const t = window.setInterval(async () => {
-      if (document.visibilityState === 'hidden') return;
+      if (document.visibilityState === 'hidden' || polling) return;
       if (Date.now() - lastFull.current > FULL_REFRESH_MS) {
         refresh();
         return;
       }
+      polling = true;
       try {
         const v = await fetchSignalVersion(session.roomCode);
         if (v === null || v !== versionRef.current) refresh();
       } catch {
         refresh();
+      } finally {
+        polling = false;
       }
     }, POLL_MS);
     return () => window.clearInterval(t);

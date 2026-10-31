@@ -194,7 +194,7 @@ function StartVotingBar({ state, session, run }: PhaseProps) {
   };
 
   return (
-    <HostBar pin={state.host_pin} label={missing.length ? `FALTAN ${missing.length}` : 'TODOS LISTOS'}>
+    <HostBar pin={state.host_pin} label={missing.length ? `FALTAN ${missing.length}` : '✓ TODOS'}>
       <HostButton onClick={startVoting}>Empezar la votación</HostButton>
     </HostBar>
   );

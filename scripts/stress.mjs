@@ -3,17 +3,19 @@
 //   postgres_changes sobre qeq_room_signal + broadcast "bump" + sondeo de versión cada 3 s.
 // Mide cuánto tarda cada cambio del anfitrión/votos en llegar a TODOS los clientes.
 //
-// Uso: node scripts/stress.mjs [jugadores=30] [anécdotas=5] [sinRealtime=0]
+// Uso: node scripts/stress.mjs [jugadores=30] [rondas=5] [pgChanges=0] [variante=v4]
+//   variante v4 (por defecto, la de la app): aviso por broadcast enviado desde la BD + agrupación + sondeo
+//   v1: postgres_changes + broadcast del cliente sin agrupar (la versión inicial, para comparar)
 import fs from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
 
 const N = Number(process.argv[2] || 30);
 const ROUNDS = Number(process.argv[3] || 5);
-const NO_RT = process.argv[4] === '1';
+const NO_RT = process.argv[4] !== '1'; // por defecto sin postgres_changes
 // v2 = como la app nueva: sin broadcast redundante y agrupando ráfagas de eventos (debounce)
 const V2 = process.argv[5] !== 'v1';
 // v4 = el aviso lo manda la base de datos (trigger → realtime.send); el cliente no envía nada
-const V4 = process.argv[5] === 'v4';
+const V4 = (process.argv[5] || 'v4') === 'v4';
 const DEBOUNCE = 150;
 const env = Object.fromEntries(
   fs.readFileSync(new URL('../.env', import.meta.url), 'utf8').split('\n')

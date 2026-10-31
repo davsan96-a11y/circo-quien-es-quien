@@ -92,7 +92,7 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
         </p>
       )}
 
-      {state.is_host && notVoted.length > 0 && (
+      {state.is_host && notVoted.length > 0 && notVoted.length <= 8 && (
         <p className="muted small center" data-testid="not-voted">
           Faltan por votar: {joinNames(notVoted.map((p) => p.name))}
         </p>
@@ -101,7 +101,7 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
       <GameFooter state={state} session={session} run={run} />
 
       {state.is_host && (
-        <HostBar pin={state.host_pin} label={left > 0 ? `FALTAN ${left}` : 'TODOS HAN VOTADO'}>
+        <HostBar pin={state.host_pin} label={left > 0 ? `FALTAN ${left}` : '✓ TODOS'}>
           <HostButton onClick={reveal}>Revelar</HostButton>
         </HostBar>
       )}
