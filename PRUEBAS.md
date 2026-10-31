@@ -55,7 +55,8 @@ Navegadores reales (22 en la misma partida): cada paso llega a la última pantal
     cambiar de fase.
 
 Fallos de las propias pruebas (no de la app), también corregidos: comprobación de fuga demasiado amplia
-(`voted_player_ids` contiene "player_id"), carreras en los tests, y contextos de navegador sin cerrar entre
+(`voted_player_ids` contiene "player_id"; una pregunta descartada con "Otra pregunta" que luego le toca
+a otro jugador no es una fuga), carreras en los tests, y contextos de navegador sin cerrar entre
 pruebas (35 páginas vivas de pruebas anteriores dejaban sin CPU a las siguientes).
 
 ## Lo que no se ha podido probar

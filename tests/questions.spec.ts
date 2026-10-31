@@ -189,13 +189,16 @@ test('modo preguntas completo', async ({ browser }) => {
   for (const s of stateLog.filter((x) => x.body.phase === 'voting')) {
     expect(JSON.stringify(s.body)).not.toMatch(/"(player_id|author|author_id|guessed_player_id|correct)"/);
   }
-  for (const s of stateLog.filter((x) => x.body.phase === 'writing')) {
-    const mine = (s.body.my_questions as { question: string }[] | undefined) ?? [];
-    const owner = all.find((p) => p.name === s.label)!;
-    for (const q of mine) expect(q.question).toBeTruthy();
-    for (const other of all.filter((p) => p !== owner))
-      for (const q of other.questions.filter(Boolean))
-        if (!owner.questions.includes(q)) expect(JSON.stringify(s.body)).not.toContain(q);
+  // Cada uno solo recibe preguntas que han sido suyas en algún momento (al cambiar una pregunta, la
+  // descartada vuelve al bote y puede tocarle a otro: eso no es una fuga).
+  const writing = stateLog.filter((x) => x.body.phase === 'writing');
+  const held = new Map<string, Set<string>>(all.map((p) => [p.name, new Set<string>()]));
+  for (const s of writing)
+    for (const q of (s.body.my_questions as { question: string }[] | undefined) ?? []) held.get(s.label)!.add(q.question);
+  const everyQuestion = new Set([...held.values()].flatMap((x) => [...x]));
+  for (const s of writing) {
+    const body = JSON.stringify(s.body);
+    for (const q of everyQuestion) if (!held.get(s.label)!.has(q)) expect(body, `${s.label} ve "${q}"`).not.toContain(q);
   }
 
   // ───── Jugar otra vez → Anécdotas: no reaparece ningún borrador
