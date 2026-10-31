@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { ApiError } from '../lib/api';
 import { useGameState } from '../lib/useGameState';
 import { useWakeLock } from '../lib/wakeLock';
+import { clearDrafts } from '../lib/session';
 import type { GameState, Session } from '../lib/types';
 import { OfflineBanner, Stripes, useUi } from '../components/ui';
 import { Lobby } from './Lobby';
@@ -28,6 +29,12 @@ export function Game({ session, onSessionLost }: { session: Session; onSessionLo
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [screenKey]);
+
+  // Los borradores solo tienen sentido mientras se escribe (evita que reaparezcan al "Jugar otra vez")
+  const phase = state?.phase;
+  useEffect(() => {
+    if (phase && phase !== 'writing') clearDrafts(session.roomCode);
+  }, [phase, session.roomCode]);
 
   const run = useCallback(
     async (fn: () => Promise<unknown>) => {

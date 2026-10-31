@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { api } from '../lib/api';
 import { roomUrl } from '../lib/router';
-import { ExitLink, HostBar, Stripes, useUi } from '../components/ui';
+import { HostBar, HostButton, Stripes, useUi } from '../components/ui';
+import { GameFooter } from '../components/GameFooter';
+import type { GameState } from '../lib/types';
 import type { PhaseProps } from './Game';
 
 export function QrCode({ code, className }: { code: string; className?: string }) {
@@ -18,6 +20,68 @@ export function QrCode({ code, className }: { code: string; className?: string }
       .catch(() => setSvg(''));
   }, [code]);
   return <div className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
+export function modeLabel(s: Pick<GameState, 'mode' | 'questions_per_player'>) {
+  if (s.mode === 'questions')
+    return `❓ Preguntas · ${s.questions_per_player} por jugador`;
+  return '📜 Anécdotas';
+}
+
+function ModePicker({ state, session, run }: PhaseProps) {
+  const q = state.mode === 'questions';
+  const set = (mode: string, count: number) => run(() => api.setMode(session, mode, count));
+  return (
+    <div className="card">
+      <span className="label">Modo de juego</span>
+      <div className="mode-grid" role="radiogroup" aria-label="Modo de juego">
+        <button
+          role="radio"
+          aria-checked={!q}
+          className={`mode-btn ${!q ? 'is-on' : ''}`}
+          onClick={() => !q || set('anecdotes', state.questions_per_player)}
+        >
+          <span className="mode-icon">📜</span>
+          <b>Anécdotas</b>
+          <span className="small muted">Cada uno cuenta un secreto suyo</span>
+        </button>
+        <button
+          role="radio"
+          aria-checked={q}
+          className={`mode-btn ${q ? 'is-on' : ''}`}
+          onClick={() => q || set('questions', state.questions_per_player)}
+        >
+          <span className="mode-icon">❓</span>
+          <b>Preguntas</b>
+          <span className="small muted">Cada uno responde preguntas al azar</span>
+        </button>
+      </div>
+      {q && (
+        <div className="row-between">
+          <span className="text">Preguntas por jugador</span>
+          <div className="seg" role="radiogroup" aria-label="Preguntas por jugador">
+            {[1, 2, 3].map((n) => (
+              <button
+                key={n}
+                role="radio"
+                aria-checked={state.questions_per_player === n}
+                className={`seg-btn ${state.questions_per_player === n ? 'is-on' : ''}`}
+                onClick={() => set('questions', n)}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      {q && (
+        <p className="muted small">
+          Habrá unas {state.players.length * state.questions_per_player} respuestas que adivinar con{' '}
+          {state.players.length} jugadores.
+        </p>
+      )}
+    </div>
+  );
 }
 
 export function Lobby({ state, session, run }: PhaseProps) {
@@ -77,6 +141,8 @@ export function Lobby({ state, session, run }: PhaseProps) {
         ))}
       </div>
 
+      {host && <ModePicker state={state} session={session} run={run} setState={() => {}} />}
+
       {host ? (
         <div className="card host-card">
           <div className="row-between">
@@ -104,17 +170,20 @@ export function Lobby({ state, session, run }: PhaseProps) {
       ) : (
         <div className="card waiting-card">
           <p className="text">⏳ Esperando a que el maestro de pista empiece…</p>
+          <p className="gold" data-testid="mode-label">
+            Modo: {modeLabel(state)}
+          </p>
           {state.liar_bonus && <p className="muted small">Bonus engañador activado: el autor gana +1 por cada uno que falle (máx. 3).</p>}
         </div>
       )}
 
-      <ExitLink />
+      <GameFooter state={state} session={session} run={run} />
 
       {host && (
         <HostBar label={n < 3 ? 'MÍNIMO 3' : undefined}>
-          <button className="btn btn-dark" disabled={n < 3} onClick={() => run(() => api.startWriting(session))}>
-            Empezar a escribir
-          </button>
+          <HostButton disabled={n < 3} onClick={() => run(() => api.startWriting(session))}>
+            {state.mode === 'questions' ? 'Empezar a responder' : 'Empezar a escribir'}
+          </HostButton>
         </HostBar>
       )}
 

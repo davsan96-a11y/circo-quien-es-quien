@@ -5,6 +5,7 @@ export type Route =
   | { name: 'join'; code: string }
   | { name: 'create' }
   | { name: 'recover'; code: string }
+  | { name: 'rejoin'; code: string }
   | { name: 'room'; code: string };
 
 const cleanCode = (c: string | undefined | null) =>
@@ -22,6 +23,8 @@ export function parseRoute(): Route {
       return { name: 'create' };
     case 'anfitrion':
       return { name: 'recover', code: cleanCode(arg) };
+    case 'volver':
+      return { name: 'rejoin', code: cleanCode(arg) };
     default:
       return { name: 'home' };
   }

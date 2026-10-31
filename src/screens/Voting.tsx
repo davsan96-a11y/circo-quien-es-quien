@@ -1,5 +1,6 @@
 import { api } from '../lib/api';
-import { ExitLink, HostBar, Stripes, useUi } from '../components/ui';
+import { HostBar, HostButton, Stripes, joinNames, useUi } from '../components/ui';
+import { GameFooter } from '../components/GameFooter';
 import type { PhaseProps } from './Game';
 
 export function Voting({ state, session, run, setState }: PhaseProps) {
@@ -10,6 +11,10 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
   const voters = state.voter_count ?? state.players.length;
   const left = Math.max(0, voters - voted);
   const others = state.players.filter((p) => p.id !== state.me.id);
+  const word = state.mode === 'questions' ? 'Respuesta' : 'Anécdota';
+  const question = state.anecdote?.question;
+  const votedIds = new Set(state.voted_player_ids ?? []);
+  const notVoted = state.players.filter((p) => !votedIds.has(p.id));
 
   const vote = (id: string) => {
     if (state.my_vote === id) return;
@@ -27,7 +32,7 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
       });
       if (!ok) return;
     }
-    run(() => api.reveal(session));
+    await run(() => api.reveal(session, state.index ?? 0));
   };
 
   return (
@@ -35,7 +40,7 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
       <Stripes />
       <div className="row-between">
         <b className="gold" data-testid="anecdote-index">
-          Anécdota {idx} de {total}
+          {word} {idx} de {total}
         </b>
         <span className="muted" data-testid="voted-count">
           Han votado <b className="text">{voted}</b> de {voters}
@@ -45,6 +50,11 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
       <div className="poster">
         <div className="poster-inner">
           <span className="poster-q">¿De quién es?</span>
+          {question && (
+            <p className="poster-question" data-testid="anecdote-question">
+              {question}
+            </p>
+          )}
           <p className="poster-text" data-testid="anecdote-text">
             “{state.anecdote?.text}”
           </p>
@@ -82,13 +92,17 @@ export function Voting({ state, session, run, setState }: PhaseProps) {
         </p>
       )}
 
-      <ExitLink />
+      {state.is_host && notVoted.length > 0 && (
+        <p className="muted small center" data-testid="not-voted">
+          Faltan por votar: {joinNames(notVoted.map((p) => p.name))}
+        </p>
+      )}
+
+      <GameFooter state={state} session={session} run={run} />
 
       {state.is_host && (
-        <HostBar label={left > 0 ? `FALTAN ${left}` : 'TODOS HAN VOTADO'}>
-          <button className="btn btn-dark" onClick={reveal}>
-            Revelar
-          </button>
+        <HostBar pin={state.host_pin} label={left > 0 ? `FALTAN ${left}` : 'TODOS HAN VOTADO'}>
+          <HostButton onClick={reveal}>Revelar</HostButton>
         </HostBar>
       )}
     </div>

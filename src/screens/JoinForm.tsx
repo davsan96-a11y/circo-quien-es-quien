@@ -36,7 +36,12 @@ export function JoinForm({
       onSession(s);
       navigate(`sala/${r.code}`, true);
     } catch (err) {
-      toast(err instanceof ApiError ? err.message : 'Algo ha fallado, inténtalo otra vez');
+      const msg = err instanceof ApiError ? err.message : 'Algo ha fallado, inténtalo otra vez';
+      toast(
+        mode === 'join' && /empezado|cogido/.test(msg)
+          ? `${msg}. Si ya estabas jugando, toca "Ya estaba jugando".`
+          : msg,
+      );
       setBusy(false);
     }
   };
@@ -107,9 +112,14 @@ export function JoinForm({
       </button>
 
       {mode === 'join' && (
-        <button type="button" className="link" onClick={() => navigate(`anfitrion/${code}`)}>
-          Soy el anfitrión y he perdido mi móvil
-        </button>
+        <div className="join-links">
+          <button type="button" className="link" onClick={() => navigate(`anfitrion/${code}`)}>
+            Soy el anfitrión y he perdido mi móvil
+          </button>
+          <button type="button" className="link muted-link" onClick={() => navigate(`volver/${code}`)}>
+            Ya estaba jugando y se me ha cerrado
+          </button>
+        </div>
       )}
     </form>
   );

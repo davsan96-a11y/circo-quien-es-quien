@@ -1,4 +1,4 @@
-import { Component, createContext, useCallback, useContext, useRef, useState } from 'react';
+import { Component, createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { navigate } from '../lib/router';
 
@@ -116,11 +116,13 @@ export function Tent() {
   );
 }
 
-export function HostBar({ children, label }: { children: ReactNode; label?: ReactNode }) {
+export function HostBar({ children, label, pin }: { children: ReactNode; label?: ReactNode; pin?: string }) {
   return (
     <div className="hostbar">
       <div className="hostbar-head">
-        <span>MAESTRO DE PISTA</span>
+        <span>
+          MAESTRO DE PISTA{pin && <span className="hostbar-pin"> · PIN {pin}</span>}
+        </span>
         {label && <span>{label}</span>}
       </div>
       {children}
@@ -128,10 +130,49 @@ export function HostBar({ children, label }: { children: ReactNode; label?: Reac
   );
 }
 
+/**
+ * Botón principal del anfitrión. Se desactiva mientras la acción está en curso y durante un
+ * instante al aparecer, para que un doble toque no dispare la acción de la pantalla siguiente
+ * (p. ej. "Revelar" → "Siguiente anécdota" están en el mismo sitio).
+ */
+export function HostButton({
+  onClick,
+  children,
+  disabled,
+}: {
+  onClick: () => Promise<unknown> | void;
+  children: ReactNode;
+  disabled?: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setReady(true), 600);
+    return () => window.clearTimeout(t);
+  }, []);
+  return (
+    <button
+      className="btn btn-dark"
+      disabled={disabled || busy || !ready}
+      onClick={async () => {
+        if (busy) return;
+        setBusy(true);
+        try {
+          await onClick();
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 /** Vuelve a la portada sin abandonar la partida (se puede volver con "Volver a mi partida") */
 export function ExitLink() {
   return (
-    <button className="link exit-link" onClick={() => navigate('')}>
+    <button className="link exit-link muted-link" onClick={() => navigate('')}>
       ‹ Salir al menú
     </button>
   );

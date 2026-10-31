@@ -39,7 +39,16 @@ export function App() {
     case 'join':
       return <JoinForm key={`join-${route.code}`} mode="join" initialCode={route.code} onSession={onSession} />;
     case 'recover':
-      return <Recover initialCode={route.code} session={session} onSession={onSession} />;
+    case 'rejoin':
+      return (
+        <Recover
+          key={route.name}
+          mode={route.name === 'recover' ? 'host' : 'player'}
+          initialCode={route.code}
+          session={session}
+          onSession={onSession}
+        />
+      );
     case 'room':
       if (session && session.roomCode === route.code)
         return <Game key={`${session.roomCode}-${session.playerId}`} session={session} onSessionLost={onSessionLost} />;

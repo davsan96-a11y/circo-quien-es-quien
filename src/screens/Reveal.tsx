@@ -1,5 +1,6 @@
 import { api } from '../lib/api';
-import { ExitLink, HostBar, Stripes } from '../components/ui';
+import { HostBar, HostButton, Stripes } from '../components/ui';
+import { GameFooter } from '../components/GameFooter';
 import type { Score } from '../lib/types';
 import type { PhaseProps } from './Game';
 
@@ -30,13 +31,16 @@ export function Reveal({ state, session, run }: PhaseProps) {
   const liarPts = Math.min(3, wrong.length);
   const top3 = (state.scores ?? []).filter((s) => s.rank <= 3 && s.points > 0).slice(0, 5);
   const last = idx >= total;
+  const word = state.mode === 'questions' ? 'Respuesta' : 'Anécdota';
+  const question = state.anecdote?.question;
 
   return (
     <div className={`page ${state.is_host ? 'has-hostbar' : ''}`}>
       <Stripes />
       <b className="gold">
-        Anécdota {idx} de {total}
+        {word} {idx} de {total}
       </b>
+      {question && <p className="reveal-question">{question}</p>}
       <p className="quote-muted">“{state.anecdote?.text}”</p>
 
       <div className="reveal-card">
@@ -107,13 +111,13 @@ export function Reveal({ state, session, run }: PhaseProps) {
         {top3.length === 0 && <span className="text">Aún no ha puntuado nadie 👀</span>}
       </div>
 
-      <ExitLink />
+      <GameFooter state={state} session={session} run={run} />
 
       {state.is_host && (
-        <HostBar>
-          <button className="btn btn-dark" onClick={() => run(() => api.next(session))}>
-            {last ? 'Ver resultados' : 'Siguiente anécdota'}
-          </button>
+        <HostBar pin={state.host_pin}>
+          <HostButton onClick={() => run(() => api.next(session, state.index ?? 0))}>
+            {last ? 'Ver resultados' : state.mode === 'questions' ? 'Siguiente respuesta' : 'Siguiente anécdota'}
+          </HostButton>
         </HostBar>
       )}
     </div>

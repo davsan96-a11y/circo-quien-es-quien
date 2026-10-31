@@ -238,7 +238,8 @@ test('partida completa 1 anfitrión + 5 jugadores', async ({ browser }) => {
     expect(s.body).not.toHaveProperty('author');
     expect(s.body).not.toHaveProperty('votes');
     expect(s.body).not.toHaveProperty('scores');
-    expect(JSON.stringify(s.body)).not.toContain('player_id');
+    // Ninguna clave que pueda llevar al autor (player_id de anécdota, author, guessed_player_id…)
+    expect(JSON.stringify(s.body)).not.toMatch(/"(player_id|author|author_id|guessed_player_id|correct)"/);
   }
   for (const s of stateLog.filter((x) => x.body.phase === 'writing' && x.label !== 'Lucía')) {
     expect(JSON.stringify(s.body)).not.toContain(texts.Lucía.slice(0, 20));

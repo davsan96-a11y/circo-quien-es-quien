@@ -42,6 +42,13 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return data as T;
 }
 
+/** Las funciones con PIN devuelven {error} en vez de lanzar, para que el contador de fallos persista */
+async function pinRpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+  const data = await rpc<T & { error?: string }>(fn, args);
+  if (data && typeof data === 'object' && 'error' in data && data.error) throw new ApiError(data.error, 'game');
+  return data;
+}
+
 const who = (s: Session) => ({ p_code: s.roomCode, p_player_id: s.playerId, p_secret: s.secret });
 
 export const api = {
@@ -57,17 +64,28 @@ export const api = {
       p_emoji: emoji,
     }),
   recoverHost: (code: string, pin: string) =>
-    rpc<{ code: string; player_id: string; secret: string }>('qeq_recover_host', { p_code: code, p_pin: pin }),
+    pinRpc<{ code: string; player_id: string; secret: string }>('qeq_recover_host', { p_code: code, p_pin: pin }),
+  recoverPlayer: (code: string, pin: string, name: string) =>
+    pinRpc<{ code: string; player_id: string; secret: string }>('qeq_recover_player', {
+      p_code: code,
+      p_pin: pin,
+      p_name: name,
+    }),
   reclaimHost: (s: Session, pin: string) =>
-    rpc('qeq_reclaim_host', { p_code: s.roomCode, p_pin: pin, p_player_id: s.playerId, p_secret: s.secret }),
+    pinRpc('qeq_reclaim_host', { p_code: s.roomCode, p_pin: pin, p_player_id: s.playerId, p_secret: s.secret }),
   getState: (s: Session) => rpc<GameState>('qeq_get_state', who(s)),
   setLiarBonus: (s: Session, on: boolean) => rpc('qeq_set_liar_bonus', { ...who(s), p_on: on }),
+  setMode: (s: Session, mode: string, count: number) => rpc('qeq_set_mode', { ...who(s), p_mode: mode, p_count: count }),
   startWriting: (s: Session) => rpc('qeq_start_writing', who(s)),
   saveAnecdote: (s: Session, text: string) => rpc('qeq_save_anecdote', { ...who(s), p_text: text }),
+  saveAnswer: (s: Session, slot: number, text: string) => rpc('qeq_save_answer', { ...who(s), p_slot: slot, p_text: text }),
+  rerollQuestion: (s: Session, slot: number) => rpc('qeq_reroll_question', { ...who(s), p_slot: slot }),
   startVoting: (s: Session) => rpc('qeq_start_voting', who(s)),
   castVote: (s: Session, guessed: string) => rpc('qeq_cast_vote', { ...who(s), p_guessed_player_id: guessed }),
-  reveal: (s: Session) => rpc('qeq_reveal', who(s)),
-  next: (s: Session) => rpc('qeq_next', who(s)),
+  // p_index: si la anécdota ya no es la actual (doble toque, dos anfitriones), no hace nada
+  reveal: (s: Session, index: number) => rpc('qeq_reveal', { ...who(s), p_index: index }),
+  next: (s: Session, index: number) => rpc('qeq_next', { ...who(s), p_index: index }),
+  finishEarly: (s: Session) => rpc('qeq_finish_early', who(s)),
   kick: (s: Session, target: string) => rpc('qeq_kick_player', { ...who(s), p_target: target }),
   restart: (s: Session) => rpc('qeq_restart', who(s)),
 };

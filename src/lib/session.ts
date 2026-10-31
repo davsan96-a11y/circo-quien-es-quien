@@ -30,17 +30,41 @@ export function clearSession(): void {
   }
 }
 
-export function loadDraft(code: string): string | null {
+// Borradores de lo que se está escribiendo y aún no se ha guardado (por sala y hueco)
+const draftKey = (code: string, slot: number) => `qeq_draft_${code}_${slot}`;
+
+export function loadDraft(code: string, slot = 0): string | null {
   try {
-    return localStorage.getItem(`qeq_draft_${code}`);
+    return localStorage.getItem(draftKey(code, slot));
   } catch {
     return null;
   }
 }
 
-export function saveDraft(code: string, text: string): void {
+export function saveDraft(code: string, text: string, slot = 0): void {
   try {
-    localStorage.setItem(`qeq_draft_${code}`, text);
+    localStorage.setItem(draftKey(code, slot), text);
+  } catch {
+    /* nada */
+  }
+}
+
+export function clearDraft(code: string, slot = 0): void {
+  try {
+    localStorage.removeItem(draftKey(code, slot));
+  } catch {
+    /* nada */
+  }
+}
+
+/** Borra todos los borradores de una sala (al salir de la fase de escribir) */
+export function clearDrafts(code: string): void {
+  try {
+    const prefix = `qeq_draft_${code}`;
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix)) localStorage.removeItem(k);
+    }
   } catch {
     /* nada */
   }

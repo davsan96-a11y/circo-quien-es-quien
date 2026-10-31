@@ -1,5 +1,6 @@
 import { api } from '../lib/api';
-import { ExitLink, HostBar, Stripes, useUi } from '../components/ui';
+import { HostBar, HostButton, Stripes, useUi } from '../components/ui';
+import { GameFooter } from '../components/GameFooter';
 import type { PhaseProps } from './Game';
 import { RankRow } from './Reveal';
 
@@ -12,17 +13,18 @@ export function Final({ state, session, run }: PhaseProps) {
   const order = [podium[1], podium[0], podium[2]];
   const heights = ['p2', 'p1', 'p3'];
   const myScore = scores.find((s) => s.player_id === state.me.id);
+  const questions = state.mode === 'questions';
 
   const again = async () => {
     if (
       await confirm({
         title: '¿Jugar otra vez?',
-        body: 'Se borran las anécdotas y los votos. Los jugadores se quedan en la sala.',
+        body: `Se borran las ${questions ? 'respuestas' : 'anécdotas'} y los votos. Los jugadores se quedan en la sala y se puede cambiar de modo.`,
         ok: 'Jugar otra vez',
         danger: true,
       })
     )
-      run(() => api.restart(session));
+      await run(() => api.restart(session));
   };
 
   return (
@@ -61,10 +63,13 @@ export function Final({ state, session, run }: PhaseProps) {
       )}
 
       <details className="all-anecdotes">
-        <summary className="btn btn-outline-purple">Ver todas las anécdotas</summary>
+        <summary className="btn btn-outline-purple">
+          {questions ? 'Ver todas las respuestas' : 'Ver todas las anécdotas'}
+        </summary>
         <ol className="anec-list">
           {(state.all_anecdotes ?? []).map((a, i) => (
             <li key={i}>
+              {a.question && <span className="muted small">{a.question}</span>}
               <p className="text">“{a.text}”</p>
               <span className="gold small">
                 {a.author?.emoji} {a.author?.name}
@@ -74,13 +79,11 @@ export function Final({ state, session, run }: PhaseProps) {
         </ol>
       </details>
 
-      <ExitLink />
+      <GameFooter state={state} session={session} run={run} />
 
       {state.is_host && (
-        <HostBar>
-          <button className="btn btn-dark" onClick={again}>
-            Jugar otra vez
-          </button>
+        <HostBar pin={state.host_pin}>
+          <HostButton onClick={again}>Jugar otra vez</HostButton>
         </HostBar>
       )}
     </div>
